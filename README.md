@@ -3,8 +3,11 @@
 Static website for GenerEdge, Inc. — replaces the previous WordPress + Elementor
 site. Plain HTML/CSS/JS, no runtime dependencies.
 
-Published automatically to **GitHub Pages** on every push to the default branch,
-and deployable to Hostinger as a plain file copy.
+**Live: <https://ejcorral3s.github.io/Generedge-Website/>**
+
+Published automatically to GitHub Pages on every push to the default branch,
+and deployable to Hostinger as a plain file copy. The Pages build is marked
+`noindex` until the site runs on its real domain — see *Deploying*.
 
 > **Working on this with Claude Code? Read [`CLAUDE.md`](./CLAUDE.md) first.**
 > It has the project context, the house rules, and what is still outstanding.

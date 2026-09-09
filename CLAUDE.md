@@ -97,7 +97,7 @@ repo, ask rather than estimate.
 
 These are blockers. The site should not go live with any of them unresolved.
 
-### 1. Images — real, but two still to design
+### 1. Images — real photographs, generated social art
 
 The five photographs were pulled off the old WordPress install with
 `bash scripts/fetch-assets.sh` and are committed. They are the originals, not
@@ -121,9 +121,14 @@ its output with hand-designed artwork — nothing else depends on how they look.
 `apple-touch-icon.png` and `favicon.svg` draw the same forward chevron as the
 logo mark; keep them in step if either changes.
 
-The `width`/`height` attributes on every `<img>` match the real intrinsic size
-of the file. If an image is replaced, update those too or the page will shift as
-it loads.
+The `width`/`height` attributes on every `<img>` carry the file's real aspect
+ratio (the nav logo declares a scaled 200x58 of an 800x233 file, which is fine —
+the ratio is what reserves the box shape). `check.py` reads the PNG/JPEG header
+of every referenced image and fails the build if a declared ratio has drifted
+more than 2% from the file, so replacing an image without updating the markup
+cannot slip through. Note that the ImageMagick step in `fetch-assets.sh`
+downscales two of the photos, which changes their ratio — re-run
+`python3 scripts/build.py && python3 scripts/check.py` after it.
 
 Also confirm image licensing — `handshake.jpg` has a stock-photo-style filename
 (`57237323-view-of-an-architect...`). If it was a licensed stock photo, confirm
@@ -135,10 +140,16 @@ All three lead forms post to whatever the `FORM` dict in `scripts/build.py`
 names. It is set to `formsubmit`, which emails each submission to
 `info@generedge.com` with no account, no API key and no server.
 
-**The one thing left:** the first submission FormSubmit receives triggers a
-confirmation email to `info@generedge.com` containing an activation link. Until
-someone clicks it, submissions are accepted in the browser but not delivered.
-Send one test enquiry through the live contact form and click the link.
+**The one thing left:** FormSubmit will not deliver to an address it has not
+verified. The first POST to a new address makes it email `info@generedge.com` an
+activation link instead; clicking that link once turns delivery on for good.
+Trigger it deliberately rather than letting a real visitor be the one who pays
+for it — the command is in the README.
+
+Until that happens nothing is silently lost. `succeeded()` in `site.js` treats an
+activation-pending reply as a failure, so the visitor gets the phone number, the
+email address and the pre-filled mailto fallback rather than a thank-you for a
+lead that went nowhere.
 
 To move to something else, change `FORM["provider"]` and rebuild — `formsubmit`,
 `web3forms` (needs `access_key`), `formspree` (needs `endpoint`), or `custom`
@@ -150,9 +161,18 @@ If a send fails for any reason, the form shows the phone number and email
 address plus a "Send it by email instead" link that opens the visitor's mail
 client pre-filled with everything they typed. A lead is never silently lost.
 
-Forms also include: honeypot field, `aria-invalid` + `role="alert"` inline
-errors, `aria-live` status region, disabled-while-sending, and a
-`generate_lead` GA event on success.
+Forms also include: a honeypot named `_honey` (FormSubmit's own honeypot, so a
+no-JavaScript POST gets server-side bot filtering too), `aria-invalid` +
+`role="alert"` inline errors, an `aria-live` status region, a 20-second send
+timeout, `aria-disabled` while sending (not `disabled`, which would drop the
+visitor's focus to `<body>` mid-request), and a `generate_lead` GA event on
+success.
+
+They also carry a real `method`/`action`, so a visitor without JavaScript still
+reaches the endpoint. **Do not remove those attributes** — a form with no action
+falls back to a GET of the current page, which would put the visitor's name,
+email, phone and TCPA consent into the URL and lose the lead. `check.py`
+enforces it.
 
 ### 3. Google Analytics is a placeholder
 

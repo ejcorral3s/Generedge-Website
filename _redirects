@@ -1,0 +1,36 @@
+# Netlify / Cloudflare Pages redirect table.
+# Mirror of the legacy redirects in .htaccess — keep the two in sync.
+/homebuilders-general-contractors      /business-loans/   301
+/hvac-contractors                      /business-loans/   301
+/minority-owned-businesses             /business-loans/   301
+/women-website                         /business-loans/   301
+/business-lending-connector            /business-loans/   301
+/business-lending-connector-2          /business-loans/   301
+/remodel-contractros-2                 /business-loans/   301
+/steve-remodel-contractors             /business-loans/   301
+/calif-funding-options-march-24        /business-loans/   301
+/contractor-faqs                       /business-loans/   301
+/learning-center                       /business-loans/   301
+/gender-edge-lender-form               /contact-us/       301
+/genderege-form                        /contact-us/       301
+/contact-us-ofn                        /contact-us/       301
+/sunlight-contact                      /contact-us/       301
+/generedge-thank-you-builders          /contact-us/       301
+/steven-pool-finturf                   /about-us/         301
+/video                                 /about-us/         301
+/ira-advocate                          /                  301
+/donate                                /                  301
+/wp-admin/*                            /                  301
+/wp-login.php                          /                  301
+
+# The old blog was Green Energy Fund solar content, deliberately not migrated.
+/how-much-money-can-you-get-with-the-inflation-reduction-act   /   301
+/cool-roofs                                                   /   301
+/18-simple-things-you-can-do-about-climate-change             /   301
+/pv-solar-vs-thermal-solar                                    /   301
+/selling-with-solar-here-are-some-important-considerations     /   301
+/questions-to-ask-if-considering-a-solar-powered-pool-heater   /   301
+/types-of-solar-panels-compared                               /   301
+/how-much-do-solar-panels-cost-for-a-3000-square-foot-house    /   301
+/what-type-of-roof-is-best-for-solar-panels                    /   301
+/feed                                                         /   301

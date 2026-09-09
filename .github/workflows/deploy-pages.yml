@@ -1,0 +1,95 @@
+# Builds the site and publishes it to GitHub Pages.
+#
+# Every branch gets the build and the checks as CI. Only the repository's
+# default branch is deployed, so renaming the default branch later needs no
+# edit here.
+#
+# ONE-TIME SETUP: if the "deploy" job fails with a message about Pages not
+# being enabled, open Settings -> Pages and set Source to "GitHub Actions",
+# then re-run this workflow. The Configure step below tries to do that
+# automatically, but GitHub only allows it for tokens with admin rights, which
+# the built-in workflow token may not have.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # Where the site will be served from. Worked out from the repository
+      # itself rather than taken from configure-pages, so the build is correct
+      # even when that step cannot enable Pages for lack of admin rights.
+      #   user/org site or custom domain -> served at a domain root, no prefix
+      #   project site                   -> served under /<repo>/
+      - name: Resolve deployment target
+        id: target
+        run: |
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          owner_lc="$(printf '%s' "$owner" | tr '[:upper:]' '[:lower:]')"
+          if [ -f CNAME ]; then
+            domain="$(tr -d '[:space:]' < CNAME)"
+            origin="https://$domain"; base=""
+          elif [ "$(printf '%s' "$repo" | tr '[:upper:]' '[:lower:]')" = "$owner_lc.github.io" ]; then
+            origin="https://$owner_lc.github.io"; base=""
+          else
+            origin="https://$owner_lc.github.io"; base="/$repo"
+          fi
+          echo "origin=$origin" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "Publishing to ${origin}${base}/"
+
+      # Best effort: switches Pages on so the first deploy needs no clicking.
+      # Needs admin rights, so a failure here is not fatal — see the note above.
+      - name: Configure Pages
+        continue-on-error: true
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Build
+        env:
+          GE_ORIGIN: ${{ steps.target.outputs.origin }}
+          GE_BASE: ${{ steps.target.outputs.base }}
+        run: python3 scripts/build.py
+
+      - name: Check structure, links, assets and accessibility
+        env:
+          GE_BASE: ${{ steps.target.outputs.base }}
+        run: python3 scripts/check.py
+
+      - name: Package
+        run: python3 scripts/package.py
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

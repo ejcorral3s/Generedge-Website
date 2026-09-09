@@ -143,7 +143,13 @@
     var re = e.target.closest('[data-consent-reopen]');
     if (!re) return;
     e.preventDefault();
-    if (banner) { banner.hidden = false; banner.scrollIntoView({ block: 'nearest' }); }
+    if (!banner) return;
+    banner.hidden = false;
+    // The banner is position:fixed and its buttons are the last thing in the
+    // document, so without moving focus a keyboard or screen-reader user gets
+    // no sign that anything happened.
+    banner.setAttribute('tabindex', '-1');
+    banner.focus();
   });
 
   /* --------------------------------------------------------------- forms */
@@ -366,11 +372,11 @@
 
       sending = true;
       if (submit) {
-        submit.disabled = true;
+        submit.setAttribute('aria-disabled', 'true');
         if (!submit.dataset.label) submit.dataset.label = submit.textContent;
         submit.textContent = 'Sending...';
       }
-      setStatus(status, '', '');
+      if (status) { status.dataset.state = ''; status.textContent = ''; }
 
       // send() can throw before returning a promise — an engine with no fetch,
       // or a blocked global. Route that into the same failure branch instead of
@@ -394,10 +400,14 @@
           setStatus(status, 'err',
             'We could not send that from here. Please call ' + TO_PHONE + ' or email ' + TO_EMAIL + '.',
             mailtoLink(payload));
+          if (status) { status.setAttribute('tabindex', '-1'); status.focus(); }
         })
         .then(function () {
           sending = false;
-          if (submit) { submit.disabled = false; submit.textContent = submit.dataset.label || 'Submit'; }
+          if (submit) {
+            submit.removeAttribute('aria-disabled');
+            submit.textContent = submit.dataset.label || 'Submit';
+          }
         });
     });
 

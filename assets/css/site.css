@@ -13,7 +13,8 @@
   --ink:#131C17;
   --muted:#4A5A51;          /* darkened from #5B6C62 for AA contrast on --stone */
   --stone:#F2F5F2;
-  --rule:#DDE4DE;
+  --rule:#DDE4DE;           /* decorative dividers only — exempt from 1.4.11 */
+  --field:#767E79;          /* form control borders: 4.17:1 on white, clears AA */
   --paper:#FFFFFF;
   --danger:#A3121F;
 
@@ -42,7 +43,14 @@ a{color:inherit;text-decoration:none}
 .sec--dark :focus-visible,.hero :focus-visible,.foot :focus-visible{outline-color:var(--glow)}
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px}
 .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+  /* Cancelling an animation strands whatever it was animating FROM. Anything
+     whose resting state lives in a @keyframes `to{}` must be restated here. */
+  .stage{opacity:1}
+  .filecard__bar i{width:100%}
+}
 
 /* skip link */
 .skip{position:absolute;left:-9999px;top:0;z-index:999;background:var(--green);color:#fff;padding:12px 20px;font-weight:700;border-radius:0 0 8px 0}
@@ -241,15 +249,21 @@ a{color:inherit;text-decoration:none}
 .f{display:block;margin-bottom:16px}
 .f>span{display:block;font-size:16px;font-weight:600;margin-bottom:7px}
 .f .req{color:var(--danger);font-weight:700}
-.f input,.f select,.f textarea{width:100%;font-family:var(--text);font-size:18px;padding:14px 15px;border:2px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink)}
-.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--green);outline:none;box-shadow:0 0 0 3px rgba(14,145,67,.18)}
-.f input[aria-invalid="true"],.f select[aria-invalid="true"]{border-color:var(--danger)}
+.f input,.f select,.f textarea{width:100%;font-family:var(--text);font-size:18px;padding:14px 15px;border:2px solid var(--field);border-radius:8px;background:#fff;color:var(--ink)}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(14,145,67,.18)}
+.f input[aria-invalid="true"],.f select[aria-invalid="true"],.f textarea[aria-invalid="true"]{border-color:var(--danger)}
+/* Wins over the [aria-invalid] rule above, so a focused invalid field still
+   shows focus. Never replace this outline with a low-contrast halo. */
+.f input:focus-visible,.f select:focus-visible,.f textarea:focus-visible{outline:3px solid var(--green);outline-offset:2px}
 .err{display:block;color:var(--danger);font-size:15px;font-weight:600;margin-top:6px}
-.err:empty{display:none}
+/* Same reason as .form__status below: these carry role="alert", and a live
+   region has to be in the accessibility tree before its content changes.
+   Collapse the empty box instead of removing the element. */
+.err:empty{margin-top:0}
 .consent{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--muted);margin:8px 0 22px;line-height:1.5}
 .consent input{margin-top:4px;width:20px;height:20px;flex:0 0 auto}
 .form__status{margin-top:16px;font-size:17px;font-weight:600;border-radius:8px;padding:14px 16px}
-.form__status:empty{display:none}
+.form__status:empty{padding:0;margin:0;background:none}
 .form__status[data-state="ok"]{background:rgba(14,145,67,.10);color:var(--forest)}
 .form__status[data-state="err"]{background:rgba(163,18,31,.08);color:var(--danger)}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
@@ -298,6 +312,16 @@ a{color:inherit;text-decoration:none}
 .foot a:hover{color:var(--glow);text-decoration:underline}
 .foot address{font-style:normal;font-size:17px;color:#CFE5D9;line-height:1.7}
 .foot .disc{margin-top:40px;padding-top:26px;border-top:1px solid rgba(255,255,255,.14);font-size:15px;color:#A9CFBB;max-width:80ch}
+
+/* A button that has to read as body-copy text: used for "Cookie settings",
+   which performs an action and so must not be a link. */
+.linkish{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.linkish:hover{color:var(--glow);text-decoration:underline}
+/* The submit button stays focusable while sending — `disabled` would drop the
+   visitor's focus to <body> mid-request — so it is dimmed rather than disabled.
+   The `sending` guard in site.js is what prevents a double submit. */
+.btn[aria-disabled="true"]{opacity:.6;cursor:progress}
+.btn[aria-disabled="true"]:hover{transform:none}
 
 /* reveal */
 .js .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}

@@ -235,11 +235,21 @@ def form_config():
     }
 
 
+def _script_safe(json_text):
+    """Make a JSON literal safe to inline in a <script> block.
+
+    The HTML tokenizer ends the block at the first literal `</script>`, so a
+    value containing one would break the page and leave window.GE_FORM
+    undefined. `<\\/` is valid JSON string syntax and parses back to `</`.
+    """
+    return json_text.replace("</", "<\\/").replace("<!--", "<\\!--")
+
+
 def head(title, desc, canonical_path):
     canonical = SITE["origin"] + BASE + canonical_path
     og_image = SITE["origin"] + BASE + "/assets/img/og-default.png"
-    form_json = json.dumps(form_config(), separators=(",", ":"))
-    ga_json = json.dumps(SITE["ga_id"])
+    form_json = _script_safe(json.dumps(form_config(), separators=(",", ":")))
+    ga_json = _script_safe(json.dumps(SITE["ga_id"]))
     robots = "noindex, nofollow" if NOINDEX else "index, follow"
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -389,13 +399,37 @@ ORG_SCHEMA = f"""<script type="application/ld+json">
 # Root-absolute URLs in href/src/action attributes. Protocol-relative ("//cdn")
 # and absolute ("https://") URLs are left alone by the negative lookahead.
 _ABS_URL = re.compile(r'(\s(?:href|src|action)=")/(?!/)')
+# srcset holds a comma-separated candidate list, not a single URL, so the
+# attribute rule above cannot reach it.
+_SRCSET = re.compile(r'(\s(?:srcset|imagesrcset)=")([^"]*)"')
+# url(/…) in an inline style attribute is a third shape the attribute rule
+# misses. Skip absolute, protocol-relative and data: URLs.
+_CSS_URL = re.compile(r'url\((?![\'"]?(?:https?:|//|data:))([\'"]?)/')
 
 
 def apply_base(html):
-    """Prefix every root-absolute internal URL with the deployment sub-path."""
+    """Prefix every root-absolute internal URL with the deployment sub-path.
+
+    Anything that escapes this ends up 404ing silently on a project site, so
+    every shape a root-absolute URL can take in the generated HTML is covered
+    here — and check.py asserts the result independently.
+    """
     if not BASE:
         return html
-    return _ABS_URL.sub(r"\1" + BASE + "/", html)
+
+    def srcset(m):
+        candidates = []
+        for part in m.group(2).split(","):
+            part = part.strip()
+            if part.startswith("/") and not part.startswith("//"):
+                part = BASE + part
+            candidates.append(part)
+        return f'{m.group(1)}{", ".join(candidates)}"'
+
+    html = _ABS_URL.sub(r"\1" + BASE + "/", html)
+    html = _SRCSET.sub(srcset, html)
+    html = _CSS_URL.sub(lambda m: f"url({m.group(1)}{BASE}/", html)
+    return html
 
 
 def build():

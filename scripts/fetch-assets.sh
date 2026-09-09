@@ -43,8 +43,9 @@ done
 
 echo
 if [ "$fail" -ne 0 ]; then
-  echo "Some downloads failed. The placeholder images are still in place for those."
-  echo "If the old host is already off, recover them from the WordPress backup instead."
+  echo "Some downloads failed. There are no placeholders — the committed copies of"
+  echo "those files are unchanged, so the site still works. If the old host is"
+  echo "already off, restore them from git or from the WordPress backup."
   exit 1
 fi
 
@@ -70,7 +71,12 @@ else
 fi
 
 echo
-echo "Still to create by hand:"
-echo "  assets/img/og-default.png      1200x630 social share card"
-echo "  assets/img/apple-touch-icon.png  180x180 home-screen icon"
+echo "og-default.png and apple-touch-icon.png are generated, not hand-made:"
+echo "  python3 scripts/make-social-images.py     (needs Pillow)"
+echo
+echo "If the optimisation step above resized anything, the width/height"
+echo "attributes in src/ no longer match the files. Run:"
+echo "  python3 scripts/build.py && python3 scripts/check.py"
+echo "check.py compares every declared image ratio against the real file and"
+echo "will name anything that drifted."
 ls -la "$DEST"

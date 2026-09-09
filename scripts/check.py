@@ -6,6 +6,7 @@ GitHub Pages project site (served under /<repo>/) as well as a domain-root one.
 """
 import html.parser
 import os
+import re
 import pathlib
 import sys
 
@@ -33,16 +34,18 @@ problems, ids_by_page = [], {}
 
 class Check(html.parser.HTMLParser):
     VOID = {'area','base','br','col','embed','hr','img','input','link','meta','source','track','wbr'}
+    # HTML lets these be left unclosed, so an enclosing end tag closing over
+    # one of them is legal rather than a mistake.
+    OPTIONAL_END = {'li','p','td','th','tr','option','dt','dd','thead','tbody','tfoot'}
 
     def __init__(self):
         super().__init__()
         self.stack=[]; self.h=[]; self.imgs=[]; self.ids=set()
         self.hrefs=[]; self.labels=set(); self.controls=[]; self.buttons=0
         self.assets=[]; self.targets_blank=[]; self.lead_forms=[]
+        self.mismatched=[]; self.stray=[]
 
-    def handle_starttag(self,t,a):
-        d=dict(a)
-        if t not in self.VOID: self.stack.append(t)
+    def _record(self,t,d):
         if t in ('h1','h2','h3','h4'): self.h.append(int(t[1]))
         if t=='img': self.imgs.append(d)
         if d.get('id'): self.ids.add(d['id'])
@@ -58,13 +61,59 @@ class Check(html.parser.HTMLParser):
         if t=='a' and d.get('target')=='_blank': self.targets_blank.append(d)
         if t=='form' and 'data-lead-form' in d: self.lead_forms.append(d)
 
-    def handle_startendtag(self,t,a): self.handle_starttag(t,a)
+    def handle_starttag(self,t,a):
+        self._record(t,dict(a))
+        if t not in self.VOID: self.stack.append(t)
+
+    # XML-style self-closing (<path d="…"/>) never opens anything. Pushing it
+    # here is what used to leave a stray 'path' on the stack from every SVG.
+    def handle_startendtag(self,t,a): self._record(t,dict(a))
 
     def handle_endtag(self,t):
         if t in self.VOID: return
-        if self.stack and self.stack[-1]==t: self.stack.pop()
-        elif t in self.stack:
-            while self.stack and self.stack.pop()!=t: pass
+        if self.stack and self.stack[-1]==t:
+            self.stack.pop(); return
+        if t in self.stack:
+            # Unwinding silently is what made this check inert: a missing
+            # </div> was simply absorbed by the next closing tag. Record every
+            # tag this end tag closed over instead.
+            while self.stack:
+                top=self.stack.pop()
+                if top==t: break
+                if top not in self.OPTIONAL_END:
+                    self.mismatched.append((top,t))
+        else:
+            self.stray.append(t)
+
+
+
+def intrinsic_size(path):
+    """(width, height) of a PNG or JPEG, read from the file header.
+
+    Deliberately dependency-free: the site has no build requirements and this
+    check must run anywhere build.py does.
+    """
+    data = path.read_bytes()
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        # IHDR is always the first chunk: width and height are big-endian u32.
+        return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    if data[:2] == b"\xff\xd8":
+        i = 2
+        while i + 9 < len(data):
+            if data[i] != 0xFF:
+                i += 1
+                continue
+            marker = data[i + 1]
+            # SOF0-SOF15 carry the frame size; C4/C8/CC are not frame headers.
+            if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                h = int.from_bytes(data[i + 5:i + 7], "big")
+                w = int.from_bytes(data[i + 7:i + 9], "big")
+                return w, h
+            if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7:
+                i += 2
+                continue
+            i += 2 + int.from_bytes(data[i + 2:i + 4], "big")
+    return None
 
 
 parsed={}
@@ -95,6 +144,10 @@ for p in pages:
     c=parsed[p]; name=p.relative_to(ROOT).as_posix()
     src=p.read_text(encoding='utf-8')
     if c.stack: problems.append(f"{name}: unclosed tags {c.stack}")
+    for opened, closer in c.mismatched:
+        problems.append(f"{name}: </{closer}> closes over an unclosed <{opened}>")
+    for t in c.stray:
+        problems.append(f"{name}: stray </{t}> with no matching open tag")
     if c.h.count(1)!=1: problems.append(f"{name}: {c.h.count(1)} <h1> (want exactly 1)")
     if src.count('<main')!=1: problems.append(f"{name}: {src.count('<main')} <main> elements")
     if '<title>' not in src: problems.append(f"{name}: no <title>")
@@ -107,6 +160,28 @@ for p in pages:
         if 'alt' not in im: problems.append(f"{name}: <img> without alt: {im.get('src')}")
         elif not im['alt'].strip() and 'aria-hidden' not in im:
             problems.append(f"{name}: <img> empty alt but not aria-hidden: {im.get('src')}")
+
+        # Declared size must match the file, or the browser reserves the wrong
+        # box and the page shifts as the image loads. This is the invariant
+        # CLAUDE.md relies on, and fetch-assets.sh can break it by resizing.
+        srcpath = (im.get('src') or '')
+        if srcpath.startswith(('http', '//', 'data:')): continue
+        w, h = im.get('width'), im.get('height')
+        if not (w and h and w.isdigit() and h.isdigit()): continue
+        f = ROOT / strip_base(srcpath.split('?')[0]).lstrip('/')
+        if not f.is_file(): continue
+        actual = intrinsic_size(f)
+        if not actual or not actual[1]:
+            continue
+        # Declaring a scaled-down size is fine (the nav logo does it); what must
+        # not drift is the RATIO, since that is what reserves the box shape.
+        declared_ratio = int(w) / int(h)
+        actual_ratio = actual[0] / actual[1]
+        if abs(declared_ratio - actual_ratio) / actual_ratio > 0.02:
+            problems.append(
+                f"{name}: <img src={srcpath}> declares {w}x{h} "
+                f"(ratio {declared_ratio:.3f}) but the file is "
+                f"{actual[0]}x{actual[1]} (ratio {actual_ratio:.3f})")
 
     for ctl in c.controls:
         i=ctl.get('id')
@@ -149,12 +224,22 @@ for p in pages:
         if frag and frag not in ids_by_page.get(target,set()):
             problems.append(f"{name}: link {hr} -> #{frag} not found in {target}")
 
-    # with a base path, no root-absolute internal URL may escape the prefix
+    # With a base path, no root-absolute internal URL may escape the prefix.
+    # Scanned over the raw source rather than the parsed attribute list, so a
+    # URL hiding in srcset or an inline url(/…) cannot slip through — those are
+    # exactly the shapes that would 404 silently on a project site.
     if BASE:
-        for a in c.assets + c.hrefs:
-            if a.startswith(('http','mailto:','tel:','#','//','data:')): continue
-            if a.startswith('/') and not a.startswith(BASE + '/'):
-                problems.append(f"{name}: URL {a} is not under the base path {BASE}")
+        for m in re.finditer(r'(?:href|src|action|srcset|imagesrcset)="([^"]*)"', src):
+            for part in m.group(1).split(','):
+                url = part.strip().split(' ')[0]
+                if not url.startswith('/') or url.startswith('//'): continue
+                if not url.startswith(BASE + '/') and url != BASE:
+                    problems.append(f"{name}: URL {url} is not under the base path {BASE}")
+        for m in re.finditer(r'url\(([\'"]?)(/[^)\'"]*)', src):
+            url = m.group(2)
+            if url.startswith('//'): continue
+            if not url.startswith(BASE + '/'):
+                problems.append(f"{name}: url({url}) is not under the base path {BASE}")
 
 print(f"checked {len(pages)} pages (base={BASE or '/'})")
 if problems:

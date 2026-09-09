@@ -1,14 +1,14 @@
 # Builds the site and publishes it to GitHub Pages.
 #
-# Every branch gets the build and the checks as CI. Only the repository's
-# default branch is deployed, so renaming the default branch later needs no
-# edit here.
+# GitHub Pages serves this repository from the `gh-pages` branch, which holds
+# only generated output — never edit it by hand. This workflow rebuilds that
+# branch from source on every push to the default branch. Pushes to other
+# branches run the build and the checks as CI and publish nothing.
 #
-# ONE-TIME SETUP: if the "deploy" job fails with a message about Pages not
-# being enabled, open Settings -> Pages and set Source to "GitHub Actions",
-# then re-run this workflow. The Configure step below tries to do that
-# automatically, but GitHub only allows it for tokens with admin rights, which
-# the built-in workflow token may not have.
+# Publishing by pushing a branch means the built-in GITHUB_TOKEN is enough:
+# `contents: write` is a permission a workflow can grant itself, whereas
+# creating a Pages deployment through the API needs Pages to have been enabled
+# by an account with admin rights first.
 name: Deploy to GitHub Pages
 
 on:
@@ -16,26 +16,23 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Let a running deploy finish rather than cancelling it half-published.
+# Let a running publish finish rather than cancelling it half-written.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v4
 
-      # Where the site will be served from. Worked out from the repository
-      # itself rather than taken from configure-pages, so the build is correct
-      # even when that step cannot enable Pages for lack of admin rights.
-      #   user/org site or custom domain -> served at a domain root, no prefix
+      # Where the site will be served from, worked out from the repository
+      # itself:
+      #   user/org site, or a CNAME file -> a domain root, no path prefix
       #   project site                   -> served under /<repo>/
       - name: Resolve deployment target
         id: target
@@ -55,14 +52,6 @@ jobs:
           echo "base=$base" >> "$GITHUB_OUTPUT"
           echo "Publishing to ${origin}${base}/"
 
-      # Best effort: switches Pages on so the first deploy needs no clicking.
-      # Needs admin rights, so a failure here is not fatal — see the note above.
-      - name: Configure Pages
-        continue-on-error: true
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: Build
         env:
           GE_ORIGIN: ${{ steps.target.outputs.origin }}
@@ -77,19 +66,35 @@ jobs:
       - name: Package
         run: python3 scripts/package.py
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
+      # Replaces the published tree wholesale and commits on top of whatever is
+      # already on gh-pages — no force-push, so nothing can be clobbered, and
+      # an unchanged build makes no empty commit.
+      - name: Publish to gh-pages
+        if: github.ref_name == github.event.repository.default_branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-  deploy:
-    needs: build
-    if: github.ref_name == github.event.repository.default_branch
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git clone --depth 1 --branch gh-pages "$remote" out 2>/dev/null || {
+            git clone --depth 1 "$remote" out
+            git -C out checkout --orphan gh-pages
+            git -C out rm -rq --cached . || true
+            find out -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          }
+
+          find out -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a _site/. out/
+
+          cd out
+          git add -A
+          if git diff --staged --quiet; then
+            echo "Site is unchanged — nothing to publish."
+            exit 0
+          fi
+          git commit -q -m "Publish ${GITHUB_SHA:0:7} to GitHub Pages"
+          git push origin gh-pages
+          echo "Published ${{ steps.target.outputs.origin }}${{ steps.target.outputs.base }}/"

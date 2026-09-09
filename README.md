@@ -99,9 +99,18 @@ Every form also carries a honeypot field, inline `aria-invalid` errors, an
 
 ### GitHub Pages (automatic)
 
+**Live at <https://ejcorral3s.github.io/Generedge-Website/>.**
+
 `.github/workflows/deploy-pages.yml` builds and publishes on every push to the
-default branch. Other branches get the build and the checks as CI but are not
-deployed.
+default branch. Other branches get the build and the checks as CI but publish
+nothing.
+
+Pages serves the repository from the **`gh-pages`** branch, which holds only
+generated output — never edit it by hand, the next deploy replaces it. Building
+into a branch rather than a Pages deployment is deliberate: pushing a branch
+needs only the `contents: write` permission a workflow can grant itself, while
+the deployment API needs Pages to have been switched on by an account with admin
+rights first.
 
 The site is served from `https://<user>.github.io/<repo>/`, so the workflow
 works out that sub-path from the repository name, builds with `GE_BASE` set to
@@ -109,15 +118,21 @@ it, and every internal URL is rewritten to match. Nothing in `src/` needs to
 know about it — which is also why nothing in `src/` may hardcode
 `https://generedge.com/...`; write root-relative links like `/about-us/`.
 
-> **If the `deploy` job fails saying Pages is not enabled**, open
-> **Settings → Pages** and set **Source** to **GitHub Actions**, then re-run the
-> workflow. The workflow tries to switch Pages on by itself, but GitHub only
-> permits that for tokens with admin rights, which the built-in workflow token
-> may not have. This is a one-time click.
+github.io builds are marked `noindex, nofollow`. A project site cannot serve a
+robots.txt that crawlers will read (they only fetch
+`https://<user>.github.io/robots.txt`, which belongs to the user site), so
+without the meta tag this would become a fully indexable duplicate of a
+financial services site competing with generedge.com in search. The tag flips to
+`index, follow` automatically as soon as the build runs against a real domain.
 
-To attach a custom domain later: add a `CNAME` file containing `generedge.com`
-at the repo root and set the domain under **Settings → Pages**. `GE_BASE`
-becomes empty automatically and the URLs go back to domain-root form.
+### Moving to generedge.com
+
+1. Add a `CNAME` file at the repo root containing `generedge.com`.
+2. Set the domain under **Settings → Pages**.
+3. Point the DNS records at GitHub Pages.
+
+`GE_BASE` then resolves to empty, URLs return to domain-root form and the pages
+become indexable — all from the CNAME file, with no workflow edit.
 
 ### Hostinger
 

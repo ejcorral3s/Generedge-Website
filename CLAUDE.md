@@ -235,22 +235,34 @@ Workspace.
 
 `.github/workflows/deploy-pages.yml` builds and publishes on every push to the
 repository's default branch. Pushes to other branches run the build and the
-checks as CI but do not deploy.
+checks as CI but publish nothing.
 
-The workflow attempts to enable Pages itself, but GitHub restricts that to
-tokens with admin rights. If the deploy job reports Pages is not enabled, set
-Settings -> Pages -> Source to "GitHub Actions" once and re-run.
+Live at <https://ejcorral3s.github.io/Generedge-Website/>.
 
-A project site is served from `https://<user>.github.io/<repo>/`, not from a
-domain root, so the workflow builds with `GE_BASE` set to that sub-path.
-`apply_base()` in `build.py` rewrites every root-absolute `href`/`src`/`action`
-to match. **This is why nothing in `src/` may hardcode an origin** — write
-`/about-us/`, never `https://generedge.com/about-us/`, or it will not be
-rewritten and will break on Pages.
+Pages serves from the **`gh-pages`** branch, which holds generated output only.
+**Never edit `gh-pages` by hand** — the next deploy overwrites it wholesale.
+Publishing that way is deliberate: pushing a branch needs only `contents: write`,
+which a workflow can grant itself, whereas `actions/deploy-pages` needs Pages to
+have been enabled by an account with admin rights. The first push of a
+`gh-pages` branch is what switched Pages on in the first place.
+
+A project site is served from `https://<user>.github.io/<repo>/`, not a domain
+root, so the workflow derives that sub-path from the repository name and builds
+with `GE_BASE` set to it. `apply_base()` in `build.py` rewrites every
+root-absolute `href`/`src`/`action` to match. **This is why nothing in `src/` may
+hardcode an origin** — write `/about-us/`, never `https://generedge.com/about-us/`,
+or it will not be rewritten and will break on Pages.
+
+Any build whose origin ends in `.github.io` is emitted `noindex, nofollow`
+(override with `GE_NOINDEX`). Do not remove this: a project site's robots.txt is
+published at a path crawlers never fetch, so the meta tag is the only thing
+stopping a self-canonicalising duplicate of a financial services site from
+competing with generedge.com in search.
 
 Attaching the real domain later: add a `CNAME` file with `generedge.com` at the
 repo root and set the domain in Settings -> Pages. `GE_BASE` then resolves to
-empty and URLs return to domain-root form with no other change.
+empty, URLs return to domain-root form and the pages become indexable, with no
+other change.
 
 ### Hostinger
 

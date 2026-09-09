@@ -122,14 +122,13 @@ PAGES = {
     "index": (
         "index.html",
         "GenerEdge — Approval-Ready Borrowing for Builders",
-        "GenerEdge works for builders to get their loans approved — lender matching, "
-        "underwriting review and closing support for ADC and permanent financing. "
-        "No up-front fees.",
+        "No up-front fees. GenerEdge works for builders to get their loans approved — "
+        "lender matching, underwriting review and closing support.",
         "home",
     ),
     "business-loans": (
         "business-loans/index.html",
-        "Business Financing — Low-Cost Loans from Mission-Driven Lenders | GenerEdge",
+        "Business Financing from Mission-Driven Lenders | GenerEdge",
         "Business loans from $50,000 to $1 million through credit unions, CDFIs and "
         "community banks. No hard credit pull to get matched. No up-front fees.",
         "loans",
@@ -331,7 +330,7 @@ FOOTER = f"""</main>
           <li><a href="/privacy-policy/">Privacy Policy</a></li>
           <li><a href="/terms-and-conditions/">Terms and Conditions</a></li>
           <li><a href="/cookies-policy/">Cookie Policy</a></li>
-          <li><a href="#" data-consent-reopen>Cookie settings</a></li>
+          <li><button type="button" class="linkish" data-consent-reopen>Cookie settings</button></li>
         </ul>
       </div>
       <div>
@@ -476,10 +475,12 @@ def build():
             "Disallow: /\n"
         )
     else:
+        # No Disallow for /404.html: blocking it in robots.txt would stop
+        # crawlers fetching the page and therefore seeing its noindex, which is
+        # the directive that actually keeps it out of the index.
         robots = (
             "User-agent: *\n"
             "Allow: /\n"
-            f"Disallow: {BASE}/404.html\n"
             "\n"
             f"Sitemap: {SITE['origin'] + BASE}/sitemap.xml\n"
         )

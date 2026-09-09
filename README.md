@@ -173,7 +173,9 @@ GE_ORIGIN=https://ejcorral3s.github.io GE_BASE=/Generedge-Website python3 script
 
 - [ ] Click the FormSubmit activation link on the first submission (above)
 - [ ] Set the real GA4 measurement ID in `SITE["ga_id"]` — analytics stay off until then
-- [ ] Tracey signs off on the copy flagged in `CLAUDE.md` §4
+- [ ] Tracey signs off on the copy flagged in `CLAUDE.md` §4 — including the
+      SMS consent checkbox becoming optional, the 4 msgs/mo frequency, and the
+      removal of the "Over $15 million" fee tier
 - [ ] Legal review of the three policy pages
 - [ ] Confirm `handshake.jpg` stock photo licensing
 - [ ] DNS: replicate MX/SPF/DKIM/DMARC **before** switching nameservers

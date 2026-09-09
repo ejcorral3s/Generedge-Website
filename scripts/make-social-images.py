@@ -66,8 +66,9 @@ def og_card():
     d.text((72 * SS, 252 * SS), "Approval-Ready", font=headline, fill=FOREST)
     d.text((72 * SS, 324 * SS), "Borrowing", font=headline, fill=GREEN)
 
+    # Shared by every page, so it must be true of every page.
     d.text((72 * SS, 424 * SS),
-           "We work for builders to get their loans approved.",
+           "Connecting business borrowers with mission-driven lenders.",
            font=sub, fill=MUTED)
 
     d.text((72 * SS, (H - band + 40) * SS), "generedge.com", font=mark, fill=WHITE)

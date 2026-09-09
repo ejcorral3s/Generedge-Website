@@ -192,6 +192,37 @@ Flagged during the rebuild, listed here so it isn't forgotten:
   ADC and permanent financing up to $15M; Business Financing = a separate
   $50K–$1M program, with the dropdown corrected to match. Confirm this is right.
 
+- **SMS consent was mandatory.** The consent checkbox on all three forms had
+  `required` on it, so nobody could submit anything — including the general
+  "How can we help?" contact form — without agreeing to marketing texts, while
+  the sentence attached to that same checkbox said "Consent is not a condition
+  of credit, financing, or purchase". It is now an **optional** opt-in.
+  `collect()` only records "SMS consent: Yes" when it is ticked, so an unticked
+  box simply produces a lead with no SMS consent. If a mandatory tick is wanted
+  on the two application forms, it has to be a separate "I agree to the Terms"
+  box — the SMS box must stay optional.
+- **SMS message frequency disagreed in three places.** The forms said "up to 4
+  msgs/mo", the Terms said "4-8 msgs/month", and the Privacy Policy said
+  "frequency varies". Carrier registration and TCPA disclosure both require the
+  figure stated at opt-in to match the linked policies, so all three now say
+  **up to 4 msgs/mo**. Confirm 4 is the real cap.
+- **The Terms claimed consent by form submission.** Section 6 said "Submitting
+  any form constitutes consent to receive SMS messages", which is not what the
+  site does and is not valid express written consent for marketing texts. It now
+  describes the actual express opt-in. This is a change to legal copy — it needs
+  the lawyer's read in section 5 below.
+- **The home page priced a loan band it says it does not place.** The stats band
+  says "Up to $15M", but the fee table, the fee chart and the builder
+  application's amount dropdown all carried an "Over $15 million - 0.50%" tier.
+  Resolved per the $15M ceiling above by removing that tier from all three. If
+  GenerEdge does place loans above $15M, the stats band is what should change
+  instead — but the two must not both stand.
+- **The contact page guaranteed an outcome.** "helping get your loan approved in
+  the amount you requested, in the time you need" is an approval-and-timing
+  promise from a company that does not approve, underwrite or fund anything, and
+  it contradicted the footer disclaimer on the same page. Reworded to describe
+  effort rather than outcome.
+
 ### 5. Legal pages
 
 `privacy-policy`, `terms-and-conditions` carry the real text migrated from

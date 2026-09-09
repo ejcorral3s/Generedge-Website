@@ -1,0 +1,3 @@
+# Preview deployment — not the production site.
+User-agent: *
+Disallow: /

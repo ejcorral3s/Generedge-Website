@@ -1,0 +1,119 @@
+# =============================================================================
+# GenerEdge — Apache / LiteSpeed config for Hostinger
+#
+# Handles: legacy URL redirects (preserves SEO), clean URLs, HTTPS, caching,
+# and security headers.
+#
+# NOTE: this file is for Apache-family hosts (Hostinger uses LiteSpeed, which
+# reads .htaccess). If the site is ever moved to Netlify/Cloudflare Pages
+# instead, port the redirect table to a _redirects file.
+# =============================================================================
+
+# ------------------------------------------------------------------ HTTPS + www
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+  # Force non-www (change to the opposite if GenerEdge prefers www)
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+  # ---------------------------------------------------------- legacy redirects
+  # Every one of these was a published page on the old WordPress site.
+  # They 301 to the closest live equivalent so existing links and any
+  # accumulated SEO carry over instead of dying in a 404.
+
+  # --- old lending / contractor landing pages -> Business Financing
+  RewriteRule ^homebuilders-general-contractors/?$      /business-loans/ [R=301,L]
+  RewriteRule ^hvac-contractors/?$                      /business-loans/ [R=301,L]
+  RewriteRule ^minority-owned-businesses/?$             /business-loans/ [R=301,L]
+  RewriteRule ^women-website/?$                         /business-loans/ [R=301,L]
+  RewriteRule ^business-lending-connector/?$            /business-loans/ [R=301,L]
+  RewriteRule ^business-lending-connector-2/?$          /business-loans/ [R=301,L]
+  RewriteRule ^remodel-contractros-2/?$                 /business-loans/ [R=301,L]
+  RewriteRule ^steve-remodel-contractors/?$             /business-loans/ [R=301,L]
+  RewriteRule ^calif-funding-options-march-24/?$        /business-loans/ [R=301,L]
+  RewriteRule ^contractor-faqs/?$                       /business-loans/ [R=301,L]
+  RewriteRule ^learning-center/?$                       /business-loans/ [R=301,L]
+
+  # --- old form / contact pages -> Contact
+  RewriteRule ^gender-edge-lender-form/?$               /contact-us/ [R=301,L]
+  RewriteRule ^genderege-form/?$                        /contact-us/ [R=301,L]
+  RewriteRule ^contact-us-ofn/?$                        /contact-us/ [R=301,L]
+  RewriteRule ^sunlight-contact/?$                      /contact-us/ [R=301,L]
+  RewriteRule ^generedge-thank-you-builders/?$          /contact-us/ [R=301,L]
+
+  # --- old about / partner pages -> About
+  RewriteRule ^steven-pool-finturf/?$                   /about-us/ [R=301,L]
+  RewriteRule ^video/?$                                 /about-us/ [R=301,L]
+
+  # --- Green Energy Fund leftovers (solar era, unrelated to lending) -> Home
+  RewriteRule ^ira-advocate/?$                          / [R=301,L]
+  RewriteRule ^donate/?$                                / [R=301,L]
+
+  # --- the entire old blog was Green Energy Fund solar content, not lending.
+  #     It is intentionally NOT migrated. Send it home rather than 404.
+  RewriteRule ^how-much-money-can-you-get-with-the-inflation-reduction-act/?$ / [R=301,L]
+  RewriteRule ^cool-roofs/?$                                                  / [R=301,L]
+  RewriteRule ^18-simple-things-you-can-do-about-climate-change/?$            / [R=301,L]
+  RewriteRule ^pv-solar-vs-thermal-solar/?$                                   / [R=301,L]
+  RewriteRule ^selling-with-solar-here-are-some-important-considerations/?$   / [R=301,L]
+  RewriteRule ^questions-to-ask-if-considering-a-solar-powered-pool-heater/?$ / [R=301,L]
+  RewriteRule ^types-of-solar-panels-compared/?$                              / [R=301,L]
+  RewriteRule ^how-much-do-solar-panels-cost-for-a-3000-square-foot-house/?$  / [R=301,L]
+  RewriteRule ^what-type-of-roof-is-best-for-solar-panels/?$                  / [R=301,L]
+
+  # --- dead WordPress plumbing
+  RewriteRule ^wp-admin/?                               / [R=301,L]
+  RewriteRule ^wp-login\.php$                           / [R=301,L]
+  RewriteRule ^feed/?$                                  / [R=301,L]
+  # Old non-pretty WordPress permalinks (/?p=123). A RewriteRule pattern is
+  # matched against the path with the query string already stripped, so the
+  # query has to be tested with RewriteCond. The trailing ? drops it.
+  RewriteCond %{QUERY_STRING} ^p=[0-9]+$
+  RewriteRule ^$                                        /? [R=301,L]
+
+  # ------------------------------------------------------------- clean URLs
+  # /about-us -> /about-us/  (so relative links and canonicals stay consistent)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !/$
+  RewriteRule ^(.*)$ /$1/ [R=301,L]
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+# ------------------------------------------------------------------- caching
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html                 "access plus 0 seconds"
+  ExpiresByType text/css                  "access plus 1 year"
+  ExpiresByType application/javascript    "access plus 1 year"
+  ExpiresByType image/png                 "access plus 1 year"
+  ExpiresByType image/jpeg                "access plus 1 year"
+  ExpiresByType image/svg+xml             "access plus 1 year"
+  ExpiresByType image/webp                "access plus 1 year"
+</IfModule>
+
+# --------------------------------------------------------- security headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# ------------------------------------------------------------- compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml
+</IfModule>
+
+# ------------------------------------------------------------------ hardening
+<FilesMatch "^(\.htaccess|\.gitignore|CLAUDE\.md|README\.md)$">
+  Require all denied
+</FilesMatch>

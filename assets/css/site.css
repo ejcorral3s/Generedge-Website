@@ -6,7 +6,6 @@
 :root{
   --forest:#104C2F;
   --forest-deep:#08281A;
-  --forest-mid:#0D3C25;
   --green:#0D843D;
   --green-dark:#0A6B31;
   --glow:#4CD787;
@@ -37,20 +36,13 @@ html{scroll-behavior:smooth}
 body{margin:0;background:var(--stone);color:var(--ink);font-family:var(--text);font-size:var(--t-body);line-height:1.6;-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4{font-family:var(--display);font-weight:var(--dw);letter-spacing:var(--dtrack);line-height:1.1;margin:0}
 p{margin:0}
-img{max-width:100%;display:block}
+img{max-width:100%;height:auto;display:block}
 a{color:inherit;text-decoration:none}
 :focus-visible{outline:3px solid var(--green);outline-offset:3px;border-radius:3px}
 .sec--dark :focus-visible,.hero :focus-visible,.foot :focus-visible{outline-color:var(--glow)}
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px}
 .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-@media(prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important}
-  html{scroll-behavior:auto}
-  /* Cancelling an animation strands whatever it was animating FROM. Anything
-     whose resting state lives in a @keyframes `to{}` must be restated here. */
-  .stage{opacity:1}
-  .filecard__bar i{width:100%}
-}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 
 /* skip link */
 .skip{position:absolute;left:-9999px;top:0;z-index:999;background:var(--green);color:#fff;padding:12px 20px;font-weight:700;border-radius:0 0 8px 0}
@@ -72,8 +64,8 @@ a{color:inherit;text-decoration:none}
   .navtoggle{display:inline-flex}
   .navlinks{position:absolute;left:0;right:0;top:100%;background:var(--paper);border-bottom:1px solid var(--rule);flex-direction:column;align-items:stretch;gap:0;padding:8px 28px 20px;box-shadow:0 18px 30px rgba(8,40,26,.10)}
   .navlinks[hidden]{display:none}
-  .navlinks a{padding:14px 0;border-bottom:1px solid var(--rule);font-size:18px}
-  .navlinks a.btn{margin-top:16px;border-bottom:0;justify-content:center}
+  .navlinks a:not(.btn){padding:14px 0;border-bottom:1px solid var(--rule);font-size:18px}
+  .navlinks a.btn{margin-top:16px;justify-content:center}
 }
 
 .btn{display:inline-flex;align-items:center;justify-content:center;font-family:var(--text);font-weight:700;font-size:18px;padding:16px 30px;border-radius:8px;border:2px solid transparent;line-height:1.2;cursor:pointer;transition:transform .18s ease, background .18s ease}
@@ -99,11 +91,9 @@ a{color:inherit;text-decoration:none}
   -webkit-mask-image:radial-gradient(700px 420px at 70% 40%,#000,transparent 78%);
   mask-image:radial-gradient(700px 420px at 70% 40%,#000,transparent 78%)}
 .hero .wrap{position:relative;padding-top:104px;padding-bottom:104px;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:60px;align-items:center}
-.hero--slim .wrap{padding-top:76px;padding-bottom:76px;grid-template-columns:minmax(0,1fr);gap:0}
 .kicker{display:inline-block;font-size:17px;font-weight:700;color:var(--forest-deep);background:var(--glow);padding:8px 16px;border-radius:999px;margin-bottom:26px}
 .kicker--light{background:rgba(14,145,67,.12);color:var(--forest)}
 .hero h1{font-size:var(--t-h1);max-width:15ch}
-.hero--slim h1{max-width:22ch}
 .hero__sub{font-size:var(--t-lead);margin-top:26px;max-width:52ch;color:#DDECE3}
 .hero__cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:38px}
 @media(max-width:960px){.hero .wrap{grid-template-columns:1fr;padding-top:70px;padding-bottom:70px}}
@@ -125,6 +115,13 @@ a{color:inherit;text-decoration:none}
 .filecard__bar{height:6px;border-radius:99px;background:rgba(255,255,255,.16);margin-top:18px;overflow:hidden}
 .filecard__bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--glow));animation:fill 2.6s cubic-bezier(.4,0,.2,1) .3s forwards}
 @keyframes fill{to{width:100%}}
+/* Cancelling an animation strands whatever it was animating FROM: .stage would
+   stay at opacity .35 (2.0:1 text) and the bar at width 0. Restate the resting
+   state here — after the rules above, so it wins on source order. */
+@media(prefers-reduced-motion:reduce){
+  .stage{opacity:1}
+  .filecard__bar i{width:100%}
+}
 
 /* ============ stats band ============ */
 .stats{background:var(--forest)}
@@ -135,7 +132,6 @@ a{color:inherit;text-decoration:none}
 
 /* ============ generic sections ============ */
 .sec{padding:96px 0}
-.sec--tight{padding:64px 0}
 .sec--stone{background:var(--stone)}
 .sec--white{background:var(--paper)}
 .sec--dark{background:var(--forest-deep);color:#fff}
@@ -185,8 +181,9 @@ a{color:inherit;text-decoration:none}
 .fee:last-child{border-bottom:0}
 .fee__label{font-size:18px;font-weight:600}
 .fee__track{height:16px;background:var(--stone);border-radius:99px;overflow:hidden}
-.fee__track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--forest),var(--green));width:0;transition:width 1.1s cubic-bezier(.4,0,.2,1)}
-.is-in .fee__track i{width:var(--w)}
+.fee__track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--forest),var(--green));width:var(--w);transition:width 1.1s cubic-bezier(.4,0,.2,1)}
+/* With script available, start at zero so the bar grows into view. */
+.js .fees:not(.is-in) .fee__track i{width:0}
 .fee__pct{font-family:var(--display);font-size:26px;font-weight:var(--dw);font-variant-numeric:tabular-nums;color:var(--forest);min-width:88px;text-align:right}
 @media(max-width:700px){.fee{grid-template-columns:1fr auto;gap:10px}.fee__track{grid-column:1/-1}}
 
@@ -316,7 +313,11 @@ a{color:inherit;text-decoration:none}
 /* A button that has to read as body-copy text: used for "Cookie settings",
    which performs an action and so must not be a link. */
 .linkish{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
-.linkish:hover{color:var(--glow);text-decoration:underline}
+.foot .linkish:hover{color:var(--glow);text-decoration:underline}
+/* In body copy it has to look like the real links beside it, or the one
+   interactive word in the paragraph is the only one that looks inert. */
+.prose .linkish{color:var(--green);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.prose .linkish:hover{color:var(--green-dark)}
 /* The submit button stays focusable while sending — `disabled` would drop the
    visitor's focus to <body> mid-request — so it is dimmed rather than disabled.
    The `sending` guard in site.js is what prevents a double submit. */

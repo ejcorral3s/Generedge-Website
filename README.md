@@ -66,12 +66,26 @@ FORM = {
 `info@generedge.com`. There is no account, no API key and no server — it works
 from any static host.
 
-> ### One-time activation, required once after launch
-> The **first** submission FormSubmit receives sends a confirmation email to
-> `info@generedge.com` with an activation link. **Click it once.** Until that
-> happens, submissions are accepted by the visitor's browser but not delivered.
-> The simplest way to do it: open the live contact form, send yourself a test
-> enquiry, then click the link in the email that arrives.
+> ### One-time activation — the only step left before leads arrive
+> FormSubmit will not deliver to an address it has not verified. The **first**
+> POST to a new address makes it email `info@generedge.com` an activation link
+> instead; clicking that link once turns delivery on permanently.
+>
+> Trigger it deliberately, so the first real visitor is not the one who pays for
+> it:
+>
+> ```bash
+> curl -X POST https://formsubmit.co/ajax/info@generedge.com \
+>   -H 'Content-Type: application/json' \
+>   -d '{"Form":"Setup test","Message":"Activating the generedge.com contact forms."}'
+> ```
+>
+> Then open `info@generedge.com` and click the confirmation link. Send one more
+> test through the live contact form to confirm it lands.
+>
+> Until that happens nothing is lost: an unverified address makes the send fail,
+> and the form falls back to the phone number, the email address and a
+> "Send it by email instead" link carrying everything the visitor typed.
 
 ### Switching provider
 
@@ -171,7 +185,7 @@ GE_ORIGIN=https://ejcorral3s.github.io GE_BASE=/Generedge-Website python3 script
 
 ## Still outstanding before the domain moves
 
-- [ ] Click the FormSubmit activation link on the first submission (above)
+- [ ] **Activate FormSubmit** — run the curl above, then click the link that arrives at `info@generedge.com`
 - [ ] Set the real GA4 measurement ID in `SITE["ga_id"]` — analytics stay off until then
 - [ ] Tracey signs off on the copy flagged in `CLAUDE.md` §4 — including the
       SMS consent checkbox becoming optional, the 4 msgs/mo frequency, and the

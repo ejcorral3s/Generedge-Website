@@ -13,8 +13,8 @@ lenders (CDFIs, credit unions, community banks). **GenerEdge is not a lender.**
 That distinction must stay visible in the footer disclaimer and anywhere the
 service is described.
 
-The old site was WordPress + Elementor, hosted by a contractor (Isaac Hunter /
-IkeHunter Web Development) at $75/month. That arrangement is ending. The site
+The old site was WordPress + Elementor, hosted and maintained by an outside
+contractor on a monthly retainer. That arrangement is ending. The site
 had 25 published pages, but only about five were real — the rest were dead
 landing pages left over from a previous project called Green Energy Fund. The
 16 blog posts were all solar-energy content from that era and are deliberately
@@ -234,21 +234,29 @@ consent.
 
 ---
 
+> **This repository is public** — GitHub Pages serves it for free on that basis.
+> Everything here is world-readable, so keep third-party names, commercial
+> terms, credentials and anything else that is not GenerEdge's to publish out of
+> it. Making the repo private would take the Pages site offline unless the
+> account has GitHub Pro.
+
 ## Domain and DNS — in progress, handled outside this repo
 
-The domain is still controlled by Isaac. Registrar is a Tucows reseller
+The domain is still controlled by the outgoing contractor. Registrar is a
+Tucows reseller
 (WHOIS shows TUCOWS.COM CO.); paid through January 2027; Hostinger confirms it
 is transfer-eligible.
 
 **The critical constraint:** GenerEdge email runs on generedge.com through
 Google Workspace. The MX, SPF, DKIM and DMARC records live in the DNS zone
-Isaac controls. Moving nameservers without replicating those records exactly
+the outgoing contractor controls. Moving nameservers without replicating those
+records exactly
 kills company email and burns the domain's sending reputation, which also
 breaks the outbound campaigns Eduardo runs.
 
 Order of operations:
 
-1. Get a full DNS zone export from Isaac.
+1. Get a full DNS zone export from the outgoing contractor.
 2. Recreate the zone at Hostinger — **MX, SPF, DKIM, DMARC first.**
 3. Switch nameservers. **Verify mail flows in and out before continuing.**
 4. Then transfer the registrar (~$11, includes a year of renewal).

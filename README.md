@@ -70,25 +70,34 @@ FORM = {
 from any static host.
 
 > ### One-time activation — the only step left before leads arrive
-> FormSubmit will not deliver to an address it has not verified. The **first**
-> POST to a new address makes it email `info@generedge.com` an activation link
-> instead; clicking that link once turns delivery on permanently.
+> FormSubmit will not deliver to an address it has not verified. **The
+> activation POST has already been sent**, so an email from FormSubmit with an
+> **"Activate Form"** link is waiting in `eduardo@generedge.com`. Click it once
+> and delivery is on permanently. Send a test through the live contact form
+> afterwards to confirm.
 >
-> Trigger it deliberately, so the first real visitor is not the one who pays for
-> it:
+> Until that happens nothing is lost: the endpoint reports the submission as
+> failed, and the form falls back to the phone number, the email address and a
+> "Send it by email instead" link carrying everything the visitor typed. If you
+> saw *"We could not send that from here"* on the live site, that was this — the
+> fallback doing its job.
 >
-> ```bash
-> curl -X POST https://formsubmit.co/ajax/info@generedge.com \
->   -H 'Content-Type: application/json' \
->   -d '{"Form":"Setup test","Message":"Activating the generedge.com contact forms."}'
-> ```
->
-> Then open `info@generedge.com` and click the confirmation link. Send one more
-> test through the live contact form to confirm it lands.
->
-> Until that happens nothing is lost: an unverified address makes the send fail,
-> and the form falls back to the phone number, the email address and a
-> "Send it by email instead" link carrying everything the visitor typed.
+> To send leads somewhere else, change `FORM["email"]` in `scripts/build.py` and
+> rebuild. The new address needs its own activation click.
+
+### Can GitHub Actions handle the form instead?
+
+No. An Action cannot receive an anonymous POST from a visitor's browser, and
+every mechanism that could — `repository_dispatch`, the REST API — needs a
+token. On a static site that token would have to live in client-side JavaScript,
+where anyone can read it and use it against the repo. Sending mail from an
+Action has the same problem with SMTP credentials.
+
+Actions run *after* a push, which is why they are right for building and
+deploying this site and wrong for receiving form submissions. The options are a
+third-party form service (what this uses), or a small serverless endpoint
+(Cloudflare Worker, Hostinger PHP) that holds the secret server-side — that is
+the route to the Close CRM integration described in `CLAUDE.md`.
 
 ### Switching provider
 
@@ -96,7 +105,7 @@ Change `FORM["provider"]` and re-run the build. No JavaScript changes needed.
 
 | provider | what to set | notes |
 |---|---|---|
-| `formsubmit` | `email` | default. No signup; one-time activation as above. |
+| `formsubmit` | `email` | default, currently `eduardo@generedge.com`. No signup; one-time activation as above. |
 | `web3forms` | `access_key` | free key emailed to you by web3forms.com. The key is public by design — it only permits posting to your own inbox. |
 | `formspree` | `endpoint` | your `https://formspree.io/f/xxxx` URL. |
 | `custom` | `endpoint` | any URL accepting a JSON `POST`. Use this for the Close CRM worker described in `CLAUDE.md`. |
@@ -188,7 +197,7 @@ GE_ORIGIN=https://ejcorral3s.github.io GE_BASE=/Generedge-Website python3 script
 
 ## Still outstanding before the domain moves
 
-- [ ] **Activate FormSubmit** — run the curl above, then click the link that arrives at `info@generedge.com`
+- [ ] **Activate FormSubmit** — click the "Activate Form" link already waiting in `eduardo@generedge.com`
 - [ ] Set the real GA4 measurement ID in `SITE["ga_id"]` — analytics stay off until then
 - [ ] Tracey signs off on the copy flagged in `CLAUDE.md` §4 — including the
       SMS consent checkbox becoming optional, the 4 msgs/mo frequency, and the

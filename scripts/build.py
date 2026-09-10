@@ -105,7 +105,11 @@ SITE = {
 # to a pre-filled mailto: link so the visitor can send the same details by email.
 FORM = {
     "provider": "formsubmit",
-    "email": SITE["email"],
+    # Where leads land. Deliberately a person's mailbox, not the shared info@
+    # address — whoever owns it has to click FormSubmit's one-time activation
+    # link, and they are the one watching for leads. Change this and rebuild to
+    # point it somewhere else.
+    "email": "eduardo@generedge.com",
     "endpoint": "",
     "access_key": "",
     "subject": "New enquiry from generedge.com",
@@ -135,9 +139,10 @@ PAGES = {
     ),
     "about-us": (
         "about-us/index.html",
-        "About Us — Where Technology Meets Advocacy | GenerEdge",
-        "GenerEdge connects business borrowers with credit unions, CDFIs and community "
-        "lenders offering fair rates and terms. Founded in 2022 by Tracey Wiseman.",
+        "About Us — Your Small Business Loan Co-Pilot | GenerEdge",
+        "Real people, lower rates, zero hidden surprises. GenerEdge is an independent "
+        "borrower's agent working with community banks, credit unions and CDFIs. No "
+        "up-front fees.",
         "about",
     ),
     "contact-us": (

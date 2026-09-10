@@ -87,6 +87,12 @@ properties at the top of `site.css` — use the variables, never raw hex.
 **GenerEdge is not a lender.** Don't write copy that implies it approves,
 underwrites, funds, or sets rates. It connects, prepares files, and advocates.
 
+**No grid or graph-paper textures on backgrounds.** A faint grid overlay was
+removed from the three hero sections and from the social card at the client's
+request: it reads as a generated-template tell rather than as this company's
+design. Hero backgrounds are the gradient alone. Don't reintroduce it, and don't
+reach for it on new sections either.
+
 **Content is the client's.** Don't invent statistics, testimonials, client
 names, loan volumes, or approval rates. If a number is needed and isn't in this
 repo, ask rather than estimate.
@@ -138,13 +144,30 @@ the licence transfers to the new site, or replace it.
 
 All three lead forms post to whatever the `FORM` dict in `scripts/build.py`
 names. It is set to `formsubmit`, which emails each submission to
-`info@generedge.com` with no account, no API key and no server.
+**`eduardo@generedge.com`** with no account, no API key and no server. Change
+that one value and rebuild to send leads somewhere else.
 
 **The one thing left:** FormSubmit will not deliver to an address it has not
-verified. The first POST to a new address makes it email `info@generedge.com` an
-activation link instead; clicking that link once turns delivery on for good.
-Trigger it deliberately rather than letting a real visitor be the one who pays
-for it — the command is in the README.
+verified. The activation POST has already been sent, so an
+email from FormSubmit with an **"Activate Form"** link is sitting in
+`eduardo@generedge.com`. Clicking it once turns delivery on permanently. Until
+someone does, the endpoint answers every submission with:
+
+    {"success":"false","message":"This form needs Activation. We've sent you an
+     email containing an 'Activate Form' link..."}
+
+which `succeeded()` correctly treats as a failure, so the visitor gets the
+phone number, the email address and the mailto fallback instead of a
+thank-you for a lead that went nowhere. That is what the screenshot of
+"We could not send that from here" was showing — the fallback working, not a
+bug.
+
+**GitHub cannot host this itself.** A GitHub Action cannot receive an anonymous
+browser POST, and anything that could (a `repository_dispatch`, the API) needs a
+token, which on a static site would have to sit in client-side JavaScript where
+any visitor can read it. Sending mail from an Action needs SMTP credentials with
+the same problem. A third-party form service, or the serverless endpoint
+described below, is the only way to do this without a server.
 
 Until that happens nothing is silently lost. `succeeded()` in `site.js` treats an
 activation-pending reply as a failure, so the visitor gets the phone number, the
@@ -242,6 +265,25 @@ Flagged during the rebuild, listed here so it isn't forgotten:
   promise from a company that does not approve, underwrite or fund anything, and
   it contradicted the footer disclaimer on the same page. Reworded to describe
   effort rather than outcome.
+
+#### Client copy applied 2026-09-10
+
+Tracey sent a rewritten About page and Steve sent seven home-page edits. Both
+were applied as written, with three exceptions worth confirming:
+
+- **"we don't just fund businesses"** (Tracey, Co-Pilot Principle) implies
+  GenerEdge funds, which contradicts the footer disclaimer on the same page and
+  the house rule above. Published as **"we don't just help businesses get
+  funded"**. Revert only if GenerEdge does in fact lend.
+- **"We help you with answer lender questions"** (Steve, step 3) is not
+  grammatical; published as **"We help you answer lender questions"**.
+- **"builders loans"** (Steve, What we do) published as **"builders' loans"**,
+  keeping the possessive the previous copy had.
+
+The old About page is gone entirely, as Tracey asked. That removed the
+Finturf/SafeTurf "fintech backbone" section, which takes the SOC 2 question
+above off the table — it is no longer claimed anywhere on the site. Stephen's
+bio still names Finturf and SafeTurf, which is his own history and fine.
 
 ### 5. Legal pages
 

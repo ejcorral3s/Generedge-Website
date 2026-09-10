@@ -85,11 +85,6 @@ a{color:inherit;text-decoration:none}
 .hero__bg{position:absolute;inset:0;background:
   radial-gradient(900px 500px at 78% 12%, rgba(76,215,135,.20), transparent 62%),
   radial-gradient(700px 480px at 8% 92%, rgba(14,145,67,.30), transparent 60%);}
-.gridfx{position:absolute;inset:0;opacity:.16;
-  background-image:linear-gradient(rgba(255,255,255,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.35) 1px,transparent 1px);
-  background-size:64px 64px;
-  -webkit-mask-image:radial-gradient(700px 420px at 70% 40%,#000,transparent 78%);
-  mask-image:radial-gradient(700px 420px at 70% 40%,#000,transparent 78%)}
 .hero .wrap{position:relative;padding-top:104px;padding-bottom:104px;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:60px;align-items:center}
 .kicker{display:inline-block;font-size:17px;font-weight:700;color:var(--forest-deep);background:var(--glow);padding:8px 16px;border-radius:999px;margin-bottom:26px}
 .kicker--light{background:rgba(14,145,67,.12);color:var(--forest)}
@@ -216,10 +211,13 @@ a{color:inherit;text-decoration:none}
 /* people */
 .people{display:grid;grid-template-columns:1fr 1fr;gap:26px}
 @media(max-width:760px){.people{grid-template-columns:1fr}}
-.person{background:#fff;border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
-.person__img{aspect-ratio:4/3;background:var(--forest);overflow:hidden}
+/* Portrait beside the bio rather than a full-width banner above it, so the
+   photos read as headshots instead of dominating the card. */
+.person{background:#fff;border:1px solid var(--rule);border-radius:var(--r);padding:26px 28px;display:flex;gap:22px;align-items:flex-start}
+.person__img{flex:0 0 auto;width:112px;height:112px;border-radius:50%;background:var(--forest);overflow:hidden}
 .person__img img{width:100%;height:100%;object-fit:cover;object-position:center 22%}
-.person__b{padding:26px 28px}
+.person__b{min-width:0}
+@media(max-width:420px){.person{flex-direction:column;gap:16px}}
 .person__b h3{font-size:24px}
 .person__b em{font-style:normal;color:var(--green);font-weight:600;font-size:16px;display:block;margin:4px 0 12px}
 .person__b p{color:var(--muted);font-size:17px}

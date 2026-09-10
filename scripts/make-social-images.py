@@ -42,10 +42,6 @@ def og_card():
     im = Image.new("RGB", (W * SS, H * SS), WHITE)
     d = ImageDraw.Draw(im)
 
-    # Faint diagonal rules, echoing the .gridfx texture on the site's hero.
-    for x in range(-H, W + H, 34):
-        d.line([(x * SS, 0), ((x + H) * SS, H * SS)], fill=(237, 243, 238), width=1 * SS)
-
     # Forest band across the foot of the card.
     band = 104
     d.rectangle([0, (H - band) * SS, W * SS, H * SS], fill=FOREST)
